@@ -1,0 +1,2 @@
+requests>=2.25.1
+requests_toolbelt>=1.0.0

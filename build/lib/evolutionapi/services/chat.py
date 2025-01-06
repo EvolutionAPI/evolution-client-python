@@ -67,3 +67,16 @@ class ChatService:
             data=data.__dict__,
             instance_token=instance_token
         )
+    
+    def get_messages(self, instance_id: str, remote_jid: str, instance_token: str, page: int = 1, offset: int = 50):
+        '''Get messages from a chat'''        
+        payload = {
+            "where": {"key": {"remoteJid": remote_jid}},
+            "page": page,
+            "offset": offset,
+        }
+        return self.client.post(
+            f'chat/findMessages/{instance_id}', 
+            data=payload,
+            instance_token=instance_token,
+        )

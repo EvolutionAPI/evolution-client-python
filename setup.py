@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='evolutionapi',
-    version='0.0.6',
+    version='0.0.7',
     description='Client Python para a API Evolution',
     author='Davidson Gomes',
     author_email='contato@agenciadgcode.com',

@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: evolutionapi
+Version: 0.0.7
+Summary: Client Python para a API Evolution
+Author: Davidson Gomes
+Author-email: contato@agenciadgcode.com
+Requires-Python: >=3.6
+Requires-Dist: requests>=2.25.1
+Requires-Dist: requests_toolbelt>=1.0.0
