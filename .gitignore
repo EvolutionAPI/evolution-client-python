@@ -1,3 +1,4 @@
 # Python-generated files
 __pycache__/
 *.cpython*.pyc
+evolutionapi.egg-info/

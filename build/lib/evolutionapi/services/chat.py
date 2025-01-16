@@ -1,4 +1,4 @@
-from typing import Union, BinaryIO
+from typing import Union, BinaryIO, Optional
 from ..models.chat import *
 
 class ChatService:
@@ -68,13 +68,53 @@ class ChatService:
             instance_token=instance_token
         )
     
-    def get_messages(self, instance_id: str, remote_jid: str, instance_token: str, page: int = 1, offset: int = 50):
-        '''Get messages from a chat'''        
+    def get_messages(
+        self, 
+        instance_id: str, 
+        remote_jid: str, 
+        instance_token: str, 
+        message_id: Optional[str] = None,
+        whatsapp_message_id: Optional[str] = None,
+        from_me: Optional[bool] = None,
+        message_type: Optional[str] = None,
+        source: Optional[str] = None,
+        timestamp_start: Optional[str] = None,
+        timestamp_end: Optional[str] = None,
+        page: int = 1, 
+        offset: int = 50
+    ):
+        '''
+        Obtém mensagens de um chat com filtros opcionais
+        
+        Args:
+            timestamp_start: Data inicial no formato ISO (ex: "2025-01-16T00:00:00Z")
+            timestamp_end: Data final no formato ISO (ex: "2025-01-16T23:59:59Z")
+        '''
+        where = {"key": {"remoteJid": remote_jid}}
+        
+        if message_id:
+            where["id"] = message_id
+        if whatsapp_message_id:
+            where["key"]["id"] = whatsapp_message_id
+        if from_me is not None:
+            where["key"]["fromMe"] = from_me
+        if message_type:
+            where["messageType"] = message_type
+        if source:
+            where["source"] = source
+        if timestamp_start or timestamp_end:
+            where["messageTimestamp"] = {}
+            if timestamp_start:
+                where["messageTimestamp"]["gte"] = timestamp_start
+            if timestamp_end:
+                where["messageTimestamp"]["lte"] = timestamp_end
+            
         payload = {
-            "where": {"key": {"remoteJid": remote_jid}},
+            "where": where,
             "page": page,
             "offset": offset,
         }
+        
         return self.client.post(
             f'chat/findMessages/{instance_id}', 
             data=payload,
