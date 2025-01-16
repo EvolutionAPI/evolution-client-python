@@ -2,3 +2,4 @@
 __pycache__/
 *.cpython*.pyc
 evolutionapi.egg-info/
+dist/
