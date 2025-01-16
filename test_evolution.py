@@ -14,9 +14,10 @@ client = EvolutionClient(
 instance_token = "60BDC703E413-4710-9473-CA2A763866FE"
 instance_id = "94a0aafa-e636-4534-a185-5562bf8f2c22"
 
-response = client.group.fetch_all_groups(instance_id, instance_token, False)
+# response = client.group.fetch_all_groups(instance_id, instance_token, False)
 
-print(response)
+# print(response)
+
 
 # text_message = TextMessage(
 #     number="557499879409",
@@ -92,3 +93,19 @@ print(response)
 
 # print("Instância deletada")
 # print(delete_instance)
+
+# group_id = "120363024931487276@g.us"
+
+# # Buscando as 3 últimas mensagens do grupo
+# mensagens = client.chat.get_messages(
+#     instance_id=instance_id,
+#     remote_jid=group_id,
+#     instance_token=instance_token,
+#     timestamp_start="2024-12-27T00:00:00Z",
+#     timestamp_end="2024-12-27T23:59:59Z",
+#     page=1,
+#     offset=3
+# )
+
+# print("Mensagens encontradas:")
+# print(mensagens)
