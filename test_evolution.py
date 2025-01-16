@@ -11,8 +11,12 @@ client = EvolutionClient(
 )
 
 
-instance_token = "429683C4C977415CAAFCCE10F7D57E11"
-instance_id = "teste"
+instance_token = "60BDC703E413-4710-9473-CA2A763866FE"
+instance_id = "94a0aafa-e636-4534-a185-5562bf8f2c22"
+
+response = client.group.fetch_all_groups(instance_id, instance_token, False)
+
+print(response)
 
 # text_message = TextMessage(
 #     number="557499879409",
@@ -25,18 +29,18 @@ instance_id = "teste"
 # print("Mensagem de texto enviada")
 # print(response)
 
-media_message = MediaMessage(
-    number="557499879409",
-    mediatype="document",
-    mimetype="application/pdf",
-    caption="Olá, como vai?",
-    fileName="arquivo.pdf"
-)
+# media_message = MediaMessage(
+#     number="557499879409",
+#     mediatype="document",
+#     mimetype="application/pdf",
+#     caption="Olá, como vai?",
+#     fileName="arquivo.pdf"
+# )
 
-response = client.messages.send_media(instance_id, media_message, instance_token, "arquivo.pdf")
+# response = client.messages.send_media(instance_id, media_message, instance_token, "arquivo.pdf")
 
-print("Mensagem de mídia enviada")
-print(response)
+# print("Mensagem de mídia enviada")
+# print(response)
 
 # print("Buscando instâncias")
 # instances = client.instances.fetch_instances()
