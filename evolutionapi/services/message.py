@@ -10,13 +10,10 @@ class MessageService:
 
     def send_text(self, instance_id: str, message: TextMessage, instance_token: str):
         # Preparar os dados como JSON
-        data = {
-            'number': message.number,
-            'text': message.text
-        }
+        data = {}
         
-        if hasattr(message, 'delay') and message.delay is not None:
-            data['delay'] = message.delay
+        # Add all additional kwargs to data dictionary
+        data.update(message.__dict__)
         
         # Usar o método post do cliente que já trata JSON corretamente
         return self.client.post(

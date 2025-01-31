@@ -261,6 +261,17 @@ mensagem = ReadMessage(
 response = client.chat.mark_message_as_read(instance_id, [mensagem], instance_token)
 ```
 
+#### Obter Mensagens do Chat
+```python
+response = client.chat.get_messages(
+    instance_id,
+    remote_jid="5511999999999@s.whatsapp.net",
+    instance_token=instance_token,
+    page=1,  # página opcional (padrão: 1)
+    offset=50  # limite de mensagens por página opcional (padrão: 50)
+)
+```
+
 ### Chamadas
 
 #### Simular Chamada
