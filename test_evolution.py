@@ -1,7 +1,16 @@
 from evolutionapi.client import EvolutionClient
 from evolutionapi.models.instance import InstanceConfig
 from evolutionapi.models.message import TextMessage, MediaMessage, MediaType
+from evolutionapi.services.websocket import WebSocketManager
+import time
+import logging
 
+# Configuração do logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 print("Iniciando cliente")
 
@@ -10,9 +19,58 @@ client = EvolutionClient(
     api_token='429683C4C977415CAAFCCE10F7D57E11'
 )
 
+instance_token = "82D55E57CBBC-48A5-98FB-E99655AE7148"
+instance_id = "teste"
 
-instance_token = "60BDC703E413-4710-9473-CA2A763866FE"
-instance_id = "94a0aafa-e636-4534-a185-5562bf8f2c22"
+# Inicializando o WebSocket
+websocket_manager = WebSocketManager(
+    base_url='http://localhost:8081',
+    instance_id=instance_id,
+    api_token=instance_token
+)
+    
+def on_message(data):
+    """Handler para evento de mensagens"""
+    try:
+        if 'data' in data:
+            message_data = data['data']
+            logger.info("=== Mensagem Recebida ===")
+            logger.info(f"De: {message_data['key']['remoteJid']}")
+            logger.info(f"Tipo: {message_data['messageType']}")
+            
+            # Extrai o conteúdo baseado no tipo da mensagem
+            if 'message' in message_data:
+                if 'conversation' in message_data['message']:
+                    logger.info(f"Conteúdo: {message_data['message']['conversation']}")
+                elif 'extendedTextMessage' in message_data['message']:
+                    logger.info(f"Conteúdo: {message_data['message']['extendedTextMessage']['text']}")
+                elif 'imageMessage' in message_data['message']:
+                    logger.info(f"Conteúdo: [Imagem] {message_data['message']['imageMessage'].get('caption', '')}")
+                else:
+                    logger.info(f"Conteúdo: {message_data['message']}")
+            
+            logger.info("=======================")
+    except Exception as e:
+        logger.error(f"Erro ao processar mensagem: {e}", exc_info=True)
+
+logger.info("Registrando handlers de eventos...")
+
+# Registrando handlers de eventos
+websocket_manager.on('messages.upsert', on_message)
+
+try:
+    logger.info("Iniciando conexão WebSocket...")
+    # Conectando ao WebSocket
+    websocket_manager.connect()
+    
+    # Mantendo o programa rodando para receber eventos
+    logger.info("Aguardando eventos...")
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    logger.info("Encerrando conexão WebSocket...")
+finally:
+    websocket_manager.disconnect()
 
 # response = client.group.fetch_all_groups(instance_id, instance_token, False)
 
@@ -94,17 +152,17 @@ instance_id = "94a0aafa-e636-4534-a185-5562bf8f2c22"
 # print("Instância deletada")
 # print(delete_instance)
 
-# group_id = "120363024931487276@g.us"
+# group_id = "120363026465248932@g.us"
 
 # # Buscando as 3 últimas mensagens do grupo
 # mensagens = client.chat.get_messages(
 #     instance_id=instance_id,
 #     remote_jid=group_id,
 #     instance_token=instance_token,
-#     timestamp_start="2024-12-27T00:00:00Z",
-#     timestamp_end="2024-12-27T23:59:59Z",
+#     timestamp_start="2025-01-16T00:00:00Z",
+#     timestamp_end="2025-01-16T23:59:59Z",
 #     page=1,
-#     offset=3
+#     offset=10
 # )
 
 # print("Mensagens encontradas:")

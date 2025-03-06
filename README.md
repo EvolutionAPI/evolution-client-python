@@ -290,3 +290,218 @@ config = HandleLabel(
 
 response = client.label.handle_label(instance_id, config, instance_token)
 ```
+
+## WebSocket
+
+O cliente Evolution API suporta conexão via WebSocket para receber eventos em tempo real. Aqui está um guia de como usar:
+
+### Configuração Básica
+
+```python
+from evolutionapi.services.websocket import WebSocketManager
+import logging
+
+# Configuração do logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Configuração do WebSocket
+websocket = WebSocketManager(
+    base_url="http://localhost:8081",  # URL da sua Evolution API
+    instance_id="teste",               # ID da sua instância
+    api_token="seu-token-aqui"         # Token de autenticação
+)
+```
+
+### Registrando Handlers de Eventos
+
+Você pode registrar handlers para diferentes tipos de eventos:
+
+```python
+def handle_message(data):
+    print(f"Nova mensagem recebida: {data}")
+
+def handle_qrcode(data):
+    print(f"QR Code atualizado: {data}")
+
+# Registrando handlers
+websocket.on("messages.upsert", handle_message)
+websocket.on("qrcode.updated", handle_qrcode)
+```
+
+### Eventos Disponíveis
+
+Os eventos disponíveis são:
+
+#### Eventos de Instância
+- `application.startup`: Disparado quando a aplicação inicia
+- `instance.create`: Disparado quando uma nova instância é criada
+- `instance.delete`: Disparado quando uma instância é deletada
+- `remove.instance`: Disparado quando uma instância é removida
+- `logout.instance`: Disparado quando uma instância faz logout
+
+#### Eventos de Conexão e QR Code
+- `qrcode.updated`: Disparado quando o QR Code é atualizado
+- `connection.update`: Disparado quando o status da conexão muda
+- `status.instance`: Disparado quando o status da instância muda
+- `creds.update`: Disparado quando as credenciais são atualizadas
+
+#### Eventos de Mensagens
+- `messages.set`: Disparado quando mensagens são definidas
+- `messages.upsert`: Disparado quando novas mensagens são recebidas
+- `messages.edited`: Disparado quando mensagens são editadas
+- `messages.update`: Disparado quando mensagens são atualizadas
+- `messages.delete`: Disparado quando mensagens são deletadas
+- `send.message`: Disparado quando uma mensagem é enviada
+- `messaging-history.set`: Disparado quando o histórico de mensagens é definido
+
+#### Eventos de Contatos
+- `contacts.set`: Disparado quando contatos são definidos
+- `contacts.upsert`: Disparado quando novos contatos são adicionados
+- `contacts.update`: Disparado quando contatos são atualizados
+
+#### Eventos de Chats
+- `chats.set`: Disparado quando chats são definidos
+- `chats.update`: Disparado quando chats são atualizados
+- `chats.upsert`: Disparado quando novos chats são adicionados
+- `chats.delete`: Disparado quando chats são deletados
+
+#### Eventos de Grupos
+- `groups.upsert`: Disparado quando grupos são criados/atualizados
+- `groups.update`: Disparado quando grupos são atualizados
+- `group-participants.update`: Disparado quando participantes de um grupo são atualizados
+
+#### Eventos de Presença
+- `presence.update`: Disparado quando o status de presença é atualizado
+
+#### Eventos de Chamadas
+- `call`: Disparado quando há uma chamada
+
+#### Eventos de Typebot
+- `typebot.start`: Disparado quando um typebot inicia
+- `typebot.change-status`: Disparado quando o status do typebot muda
+
+#### Eventos de Labels
+- `labels.edit`: Disparado quando labels são editados
+- `labels.association`: Disparado quando labels são associados/desassociados
+
+### Exemplo de Uso com Eventos Específicos
+
+```python
+def handle_messages(data):
+    logger.info(f"Nova mensagem: {data}")
+
+def handle_contacts(data):
+    logger.info(f"Contatos atualizados: {data}")
+
+def handle_groups(data):
+    logger.info(f"Grupos atualizados: {data}")
+
+def handle_presence(data):
+    logger.info(f"Status de presença: {data}")
+
+# Registrando handlers para diferentes eventos
+websocket.on("messages.upsert", handle_messages)
+websocket.on("contacts.upsert", handle_contacts)
+websocket.on("groups.upsert", handle_groups)
+websocket.on("presence.update", handle_presence)
+```
+
+### Exemplo Completo
+
+```python
+from evolutionapi.services.websocket import WebSocketManager
+import logging
+import time
+
+# Configuração do logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+def handle_message(data):
+    logger.info(f"Nova mensagem recebida: {data}")
+
+def handle_qrcode(data):
+    logger.info(f"QR Code atualizado: {data}")
+
+def handle_connection(data):
+    logger.info(f"Status da conexão: {data}")
+
+def main():
+    # Inicializa o WebSocket
+    websocket = WebSocketManager(
+        base_url="http://localhost:8081",
+        instance_id="teste",
+        api_token="seu-token-aqui"
+    )
+
+    # Registra os handlers
+    websocket.on("messages.upsert", handle_message)
+    websocket.on("qrcode.updated", handle_qrcode)
+    websocket.on("connection.update", handle_connection)
+
+    try:
+        # Conecta ao WebSocket
+        websocket.connect()
+        logger.info("Conectado ao WebSocket. Aguardando eventos...")
+
+        # Mantém o programa rodando
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        logger.info("Encerrando conexão...")
+        websocket.disconnect()
+    except Exception as e:
+        logger.error(f"Erro: {e}")
+        websocket.disconnect()
+
+if __name__ == "__main__":
+    main()
+
+### Recursos Adicionais
+
+#### Reconexão Automática
+
+O WebSocket Manager possui reconexão automática com backoff exponencial:
+
+```python
+websocket = WebSocketManager(
+    base_url="http://localhost:8081",
+    instance_id="teste",
+    api_token="seu-token-aqui",
+    max_retries=5,        # Número máximo de tentativas de reconexão
+    retry_delay=1.0       # Delay inicial entre tentativas em segundos
+)
+```
+
+#### Logging
+
+O WebSocket Manager utiliza o sistema de logging do Python. Você pode ajustar o nível de log conforme necessário:
+
+```python
+# Para ver mais detalhes
+logging.getLogger("evolutionapi.services.websocket").setLevel(logging.DEBUG)
+```
+
+### Tratamento de Erros
+
+O WebSocket Manager possui tratamento de erros robusto:
+
+- Reconexão automática em caso de desconexão
+- Logs detalhados de erros
+- Tratamento de eventos inválidos
+- Validação de dados recebidos
+
+### Dicas de Uso
+
+1. Sempre use try/except ao conectar ao WebSocket
+2. Implemente handlers para todos os eventos que você precisa monitorar
+3. Use logging para debug e monitoramento
+4. Considere implementar um mecanismo de heartbeat se necessário
+5. Mantenha o token de API seguro e não o exponha em logs
