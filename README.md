@@ -1,105 +1,417 @@
 # Evolution Client Python
 
-Client Python para interagir com a API evolutionapi.
+Python client to interact with the evolutionapi.
 
-## Instalação
+## Installation
 
 ```bash
 pip install evolutionapi
 ```
 
-## Uso Básico
+## Basic Usage
 
-### Inicializando o Cliente
+### Initializing the Client
 
 ```python
 from evolutionapi.client import EvolutionClient
 
 client = EvolutionClient(
-    base_url='http://seu-servidor:porta',
-    api_token='seu-token-api'
+    base_url='http://your-server:port',
+    api_token='your-api-token'
 )
 ```
 
-### Gerenciamento de Instâncias
+### Instance Management
 
-#### Listar Instâncias
+#### List Instances
 ```python
 instances = client.instances.fetch_instances()
 ```
 
-#### Criar Nova Instância
+#### Create New Instance
 ```python
 from evolutionapi.models.instance import InstanceConfig
 
+# Configuração básica
 config = InstanceConfig(
     instanceName="minha-instancia",
     integration="WHATSAPP-BAILEYS",
     qrcode=True
 )
 
-nova_instancia = client.instances.create_instance(config)
-```
-
-### Operações com Instâncias
-
-#### Conectar Instância
-```python
-estado = client.instance_operations.connect(instance_id, instance_token)
-```
-
-#### Verificar Estado da Conexão
-```python
-estado = client.instance_operations.get_connection_state(instance_id, instance_token)
-```
-
-#### Definir Presença
-```python
-from evolutionapi.models.presence import PresenceStatus
-
-client.instance_operations.set_presence(
-    instance_id,
-    PresenceStatus.AVAILABLE,
-    instance_token
-)
-```
-
-### Enviando Mensagens
-
-#### Mensagem de Texto
-```python
-from evolutionapi.models.message import TextMessage
-
-mensagem = TextMessage(
+# Configuração completa
+config = InstanceConfig(
+    instanceName="minha-instancia",
+    integration="WHATSAPP-BAILEYS",
+    token="token_da_instancia",
     number="5511999999999",
-    text="Olá, como vai?",
+    qrcode=True,
+    rejectCall=True,
+    msgCall="Mensagem de chamada rejeitada",
+    groupsIgnore=True,
+    alwaysOnline=True,
+    readMessages=True,
+    readStatus=True,
+    syncFullHistory=True
+)
+
+new_instance = client.instances.create_instance(config)
+```
+
+#### Configure Webhook
+```python
+from evolutionapi.models.instance import WebhookConfig
+
+config = WebhookConfig(
+    url="https://seu-servidor.com/webhook",
+    byEvents=True,
+    base64=True,
+    headers={
+        "Authorization": "Bearer seu-token"
+    },
+    events=[
+        "messages.upsert",
+        "messages.update",
+        "messages.delete",
+        "groups.upsert",
+        "groups.update",
+        "groups.delete",
+        "group-participants.update",
+        "contacts.upsert",
+        "contacts.update",
+        "contacts.delete",
+        "presence.update",
+        "chats.upsert",
+        "chats.update",
+        "chats.delete",
+        "call"
+    ]
+)
+
+response = client.instances.set_webhook(instance_id, config, instance_token)
+```
+
+#### Configure Events
+```python
+from evolutionapi.models.instance import EventsConfig
+
+config = EventsConfig(
+    enabled=True,
+    events=[
+        "messages.upsert",
+        "messages.update",
+        "messages.delete",
+        "groups.upsert",
+        "groups.update",
+        "groups.delete",
+        "group-participants.update",
+        "contacts.upsert",
+        "contacts.update",
+        "contacts.delete",
+        "presence.update",
+        "chats.upsert",
+        "chats.update",
+        "chats.delete",
+        "call"
+    ]
+)
+
+response = client.instances.set_events(instance_id, config, instance_token)
+```
+
+#### Configure Chatwoot Integration
+```python
+from evolutionapi.models.instance import ChatwootConfig
+
+config = ChatwootConfig(
+    accountId="seu-account-id",
+    token="seu-token",
+    url="https://seu-chatwoot.com",
+    signMsg=True,
+    reopenConversation=True,
+    conversationPending=False,
+    importContacts=True,
+    nameInbox="evolution",
+    mergeBrazilContacts=True,
+    importMessages=True,
+    daysLimitImportMessages=3,
+    organization="Evolution Bot",
+    logo="https://evolution-api.com/files/evolution-api-favicon.png"
+)
+
+response = client.instances.set_chatwoot(instance_id, config, instance_token)
+```
+
+#### Delete Instance
+```python
+response = client.instances.delete_instance(instance_id, instance_token)
+```
+
+#### Get Instance Info
+```python
+response = client.instances.get_instance_info(instance_id, instance_token)
+```
+
+#### Get Instance QR Code
+```python
+response = client.instances.get_instance_qrcode(instance_id, instance_token)
+```
+
+#### Get Instance Status
+```python
+response = client.instances.get_instance_status(instance_id, instance_token)
+```
+
+#### Logout Instance
+```python
+response = client.instances.logout_instance(instance_id, instance_token)
+```
+
+#### Restart Instance
+```python
+response = client.instances.restart_instance(instance_id, instance_token)
+```
+
+### Instance Operations
+
+#### Connect Instance
+```python
+state = client.instance_operations.connect(instance_id, instance_token)
+```
+
+#### Check Connection State
+```python
+state = client.instance_operations.get_connection_state(instance_id, instance_token)
+```
+
+#### Set Presence
+```python
+from evolutionapi.models.presence import PresenceConfig, PresenceStatus
+
+# Definir como disponível
+config = PresenceConfig(
+    presence=PresenceStatus.AVAILABLE
+)
+
+# Definir como indisponível
+config = PresenceConfig(
+    presence=PresenceStatus.UNAVAILABLE
+)
+
+response = client.instance_operations.set_presence(instance_id, config, instance_token)
+```
+
+### Sending Messages
+
+#### Text Message
+```python
+from evolutionapi.models.message import TextMessage, QuotedMessage
+
+# Mensagem simples
+message = TextMessage(
+    number="5511999999999",
+    text="Olá, como você está?",
     delay=1000  # delay opcional em ms
 )
 
-response = client.messages.send_text(instance_id, mensagem, instance_token)
+# Mensagem com menções
+message = TextMessage(
+    number="5511999999999",
+    text="@everyone Olá a todos!",
+    mentionsEveryOne=True,
+    mentioned=["5511999999999", "5511888888888"]
+)
+
+# Mensagem com link preview
+message = TextMessage(
+    number="5511999999999",
+    text="Confira este link: https://exemplo.com",
+    linkPreview=True
+)
+
+# Mensagem com citação
+quoted = QuotedMessage(
+    key={
+        "remoteJid": "5511999999999@s.whatsapp.net",
+        "fromMe": False,
+        "participant": "5511999999999@s.whatsapp.net",
+        "id": "123456789",
+        "owner": "5511999999999@s.whatsapp.net"
+    }
+)
+
+message = TextMessage(
+    number="5511999999999",
+    text="Esta é uma resposta",
+    quoted=quoted
+)
+
+response = client.messages.send_text(instance_id, message, instance_token)
 ```
 
-#### Mensagem de Mídia
+#### Media Message
 ```python
-from evolutionapi.models.message import MediaMessage, MediaType
+from evolutionapi.models.message import MediaMessage, MediaType, QuotedMessage
 
-mensagem = MediaMessage(
+# Mensagem com imagem
+message = MediaMessage(
     number="5511999999999",
     mediatype=MediaType.IMAGE.value,
     mimetype="image/jpeg",
     caption="Minha imagem",
     media="base64_da_imagem_ou_url",
-    fileName="imagem.jpg"
+    fileName="imagem.jpg",
+    delay=1000  # delay opcional
 )
 
-response = client.messages.send_media(instance_id, mensagem, instance_token)
+# Mensagem com vídeo
+message = MediaMessage(
+    number="5511999999999",
+    mediatype=MediaType.VIDEO.value,
+    mimetype="video/mp4",
+    caption="Meu vídeo",
+    media="base64_do_video_ou_url",
+    fileName="video.mp4"
+)
+
+# Mensagem com documento
+message = MediaMessage(
+    number="5511999999999",
+    mediatype=MediaType.DOCUMENT.value,
+    mimetype="application/pdf",
+    caption="Meu documento",
+    media="base64_do_documento_ou_url",
+    fileName="documento.pdf"
+)
+
+# Mensagem com menções
+message = MediaMessage(
+    number="5511999999999",
+    mediatype=MediaType.IMAGE.value,
+    mimetype="image/jpeg",
+    caption="@everyone Olhem esta imagem!",
+    media="base64_da_imagem",
+    mentionsEveryOne=True,
+    mentioned=["5511999999999", "5511888888888"]
+)
+
+response = client.messages.send_media(instance_id, message, instance_token)
 ```
 
-#### Mensagem com Botões
+#### Status Message
+```python
+from evolutionapi.models.message import StatusMessage, StatusType, FontType
+
+# Status de texto
+message = StatusMessage(
+    type=StatusType.TEXT,
+    content="Meu status de texto",
+    caption="Legenda opcional",
+    backgroundColor="#FF0000",
+    font=FontType.BEBASNEUE_REGULAR,
+    allContacts=True
+)
+
+# Status de imagem
+message = StatusMessage(
+    type=StatusType.IMAGE,
+    content="base64_da_imagem",
+    caption="Minha imagem de status"
+)
+
+# Status de vídeo
+message = StatusMessage(
+    type=StatusType.VIDEO,
+    content="base64_do_video",
+    caption="Meu vídeo de status"
+)
+
+# Status de áudio
+message = StatusMessage(
+    type=StatusType.AUDIO,
+    content="base64_do_audio",
+    caption="Meu áudio de status"
+)
+
+response = client.messages.send_status(instance_id, message, instance_token)
+```
+
+#### Location Message
+```python
+from evolutionapi.models.message import LocationMessage
+
+message = LocationMessage(
+    number="5511999999999",
+    name="Localização",
+    address="Endereço completo",
+    latitude=-23.550520,
+    longitude=-46.633308,
+    delay=1000  # delay opcional
+)
+
+response = client.messages.send_location(instance_id, message, instance_token)
+```
+
+#### Contact Message
+```python
+from evolutionapi.models.message import ContactMessage, Contact
+
+contact = Contact(
+    fullName="Nome Completo",
+    wuid="5511999999999",
+    phoneNumber="5511999999999",
+    organization="Empresa",
+    email="email@exemplo.com",
+    url="https://exemplo.com"
+)
+
+message = ContactMessage(
+    number="5511999999999",
+    contact=[contact]
+)
+
+response = client.messages.send_contact(instance_id, message, instance_token)
+```
+
+#### Reaction Message
+```python
+from evolutionapi.models.message import ReactionMessage
+
+message = ReactionMessage(
+    key={
+        "remoteJid": "5511999999999@s.whatsapp.net",
+        "fromMe": False,
+        "participant": "5511999999999@s.whatsapp.net",
+        "id": "123456789",
+        "owner": "5511999999999@s.whatsapp.net"
+    },
+    reaction="👍"
+)
+
+response = client.messages.send_reaction(instance_id, message, instance_token)
+```
+
+#### Poll Message
+```python
+from evolutionapi.models.message import PollMessage
+
+message = PollMessage(
+    number="5511999999999",
+    name="Minha Enquete",
+    selectableCount=1,  # número de opções que podem ser selecionadas
+    values=["Opção 1", "Opção 2", "Opção 3"],
+    delay=1000  # delay opcional
+)
+
+response = client.messages.send_poll(instance_id, message, instance_token)
+```
+
+#### Button Message
 ```python
 from evolutionapi.models.message import ButtonMessage, Button
 
-botoes = [
+# Botão de resposta simples
+buttons = [
     Button(
         type="reply",
         displayText="Opção 1",
@@ -112,18 +424,46 @@ botoes = [
     )
 ]
 
-mensagem = ButtonMessage(
+# Botão com URL
+buttons = [
+    Button(
+        type="url",
+        displayText="Visitar Site",
+        url="https://exemplo.com"
+    )
+]
+
+# Botão com número de telefone
+buttons = [
+    Button(
+        type="phoneNumber",
+        displayText="Ligar",
+        phoneNumber="5511999999999"
+    )
+]
+
+# Botão com código de cópia
+buttons = [
+    Button(
+        type="copyCode",
+        displayText="Copiar Código",
+        copyCode="ABC123"
+    )
+]
+
+message = ButtonMessage(
     number="5511999999999",
     title="Título",
     description="Descrição",
     footer="Rodapé",
-    buttons=botoes
+    buttons=buttons,
+    delay=1000  # delay opcional
 )
 
-response = client.messages.send_buttons(instance_id, mensagem, instance_token)
+response = client.messages.send_buttons(instance_id, message, instance_token)
 ```
 
-#### Mensagem com Lista
+#### List Message
 ```python
 from evolutionapi.models.message import ListMessage, ListSection, ListRow
 
@@ -145,21 +485,22 @@ section = ListSection(
     rows=rows
 )
 
-mensagem = ListMessage(
+message = ListMessage(
     number="5511999999999",
     title="Título da Lista",
     description="Descrição da lista",
     buttonText="Clique aqui",
     footerText="Rodapé",
-    sections=[section]
+    sections=[section],
+    delay=1000  # delay opcional
 )
 
-response = client.messages.send_list(instance_id, mensagem, instance_token)
+response = client.messages.send_list(instance_id, message, instance_token)
 ```
 
-### Gerenciamento de Grupos
+### Group Management
 
-#### Criar Grupo
+#### Create Group
 ```python
 from evolutionapi.models.group import CreateGroup
 
@@ -172,7 +513,7 @@ config = CreateGroup(
 response = client.group.create_group(instance_id, config, instance_token)
 ```
 
-#### Atualizar Foto do Grupo
+#### Update Group Picture
 ```python
 from evolutionapi.models.group import GroupPicture
 
@@ -180,24 +521,127 @@ config = GroupPicture(
     image="base64_da_imagem"
 )
 
-response = client.group.update_group_picture(instance_id, "grupo_jid", config, instance_token)
+response = client.group.update_group_picture(instance_id, "group_jid", config, instance_token)
 ```
 
-#### Gerenciar Participantes
+#### Update Group Subject
+```python
+from evolutionapi.models.group import GroupSubject
+
+config = GroupSubject(
+    subject="Novo Nome do Grupo"
+)
+
+response = client.group.update_group_subject(instance_id, "group_jid", config, instance_token)
+```
+
+#### Update Group Description
+```python
+from evolutionapi.models.group import GroupDescription
+
+config = GroupDescription(
+    description="Nova descrição do grupo"
+)
+
+response = client.group.update_group_description(instance_id, "group_jid", config, instance_token)
+```
+
+#### Send Group Invite
+```python
+from evolutionapi.models.group import GroupInvite
+
+config = GroupInvite(
+    groupJid="group_jid",
+    description="Convite para o grupo",
+    numbers=["5511999999999", "5511888888888"]
+)
+
+response = client.group.send_group_invite(instance_id, config, instance_token)
+```
+
+#### Manage Participants
 ```python
 from evolutionapi.models.group import UpdateParticipant
 
+# Adicionar participantes
 config = UpdateParticipant(
-    action="add",  # ou "remove", "promote", "demote"
+    action="add",
+    participants=["5511999999999", "5511888888888"]
+)
+
+# Remover participantes
+config = UpdateParticipant(
+    action="remove",
     participants=["5511999999999"]
 )
 
-response = client.group.update_participant(instance_id, "grupo_jid", config, instance_token)
+# Promover a administrador
+config = UpdateParticipant(
+    action="promote",
+    participants=["5511999999999"]
+)
+
+# Rebaixar de administrador
+config = UpdateParticipant(
+    action="demote",
+    participants=["5511999999999"]
+)
+
+response = client.group.update_participant(instance_id, "group_jid", config, instance_token)
 ```
 
-### Gerenciamento de Perfil
+#### Update Group Settings
+```python
+from evolutionapi.models.group import UpdateSetting
 
-#### Atualizar Nome do Perfil
+# Ativar modo anúncio
+config = UpdateSetting(
+    action="announcement"
+)
+
+# Desativar modo anúncio
+config = UpdateSetting(
+    action="not_announcement"
+)
+
+# Bloquear grupo
+config = UpdateSetting(
+    action="locked"
+)
+
+# Desbloquear grupo
+config = UpdateSetting(
+    action="unlocked"
+)
+
+response = client.group.update_setting(instance_id, "group_jid", config, instance_token)
+```
+
+#### Toggle Ephemeral Messages
+```python
+from evolutionapi.models.group import ToggleEphemeral
+
+config = ToggleEphemeral(
+    expiration=86400  # 24 horas em segundos
+)
+
+response = client.group.toggle_ephemeral(instance_id, "group_jid", config, instance_token)
+```
+
+### Profile Management
+
+#### Fetch Profile
+```python
+from evolutionapi.models.profile import FetchProfile
+
+config = FetchProfile(
+    number="5511999999999"
+)
+
+response = client.profile.fetch_profile(instance_id, config, instance_token)
+```
+
+#### Update Profile Name
 ```python
 from evolutionapi.models.profile import ProfileName
 
@@ -208,7 +652,7 @@ config = ProfileName(
 response = client.profile.update_profile_name(instance_id, config, instance_token)
 ```
 
-#### Atualizar Status
+#### Update Status
 ```python
 from evolutionapi.models.profile import ProfileStatus
 
@@ -219,25 +663,36 @@ config = ProfileStatus(
 response = client.profile.update_profile_status(instance_id, config, instance_token)
 ```
 
-#### Configurar Privacidade
+#### Update Profile Picture
+```python
+from evolutionapi.models.profile import ProfilePicture
+
+config = ProfilePicture(
+    picture="base64_da_imagem"
+)
+
+response = client.profile.update_profile_picture(instance_id, config, instance_token)
+```
+
+#### Configure Privacy Settings
 ```python
 from evolutionapi.models.profile import PrivacySettings
 
 config = PrivacySettings(
-    readreceipts="all",
-    profile="contacts",
-    status="contacts",
-    online="all",
-    last="contacts",
-    groupadd="contacts"
+    readreceipts="all",           # "all" ou "none"
+    profile="contacts",           # "all", "contacts", "contact_blacklist" ou "none"
+    status="contacts",            # "all", "contacts", "contact_blacklist" ou "none"
+    online="all",                 # "all" ou "match_last_seen"
+    last="contacts",              # "all", "contacts", "contact_blacklist" ou "none"
+    groupadd="contacts"           # "all", "contacts" ou "contact_blacklist"
 )
 
 response = client.profile.update_privacy_settings(instance_id, config, instance_token)
 ```
 
-### Operações de Chat
+### Chat Operations
 
-#### Verificar Números WhatsApp
+#### Check WhatsApp Numbers
 ```python
 from evolutionapi.models.chat import CheckIsWhatsappNumber
 
@@ -248,29 +703,148 @@ config = CheckIsWhatsappNumber(
 response = client.chat.check_is_whatsapp_numbers(instance_id, config, instance_token)
 ```
 
-#### Marcar Mensagem como Lida
+#### Mark Message as Read
 ```python
 from evolutionapi.models.chat import ReadMessage
 
-mensagem = ReadMessage(
+message = ReadMessage(
     remote_jid="5511999999999@s.whatsapp.net",
     from_me=False,
-    id="mensagem_id"
+    id="message_id"
 )
 
-response = client.chat.mark_message_as_read(instance_id, [mensagem], instance_token)
+response = client.chat.mark_message_as_read(instance_id, [message], instance_token)
 ```
 
-### Chamadas
+#### Archive Chat
+```python
+from evolutionapi.models.chat import ArchiveChat
 
-#### Simular Chamada
+config = ArchiveChat(
+    last_message={
+        "key": {
+            "remoteJid": "5511999999999@s.whatsapp.net",
+            "fromMe": False,
+            "id": "message_id",
+            "participant": "5511999999999@s.whatsapp.net"
+        },
+        "message": {
+            "conversation": "Última mensagem"
+        }
+    },
+    chat="5511999999999@s.whatsapp.net",
+    archive=True  # True para arquivar, False para desarquivar
+)
+
+response = client.chat.archive_chat(instance_id, config, instance_token)
+```
+
+#### Mark Chat as Unread
+```python
+from evolutionapi.models.chat import UnreadChat
+
+config = UnreadChat(
+    last_message={
+        "key": {
+            "remoteJid": "5511999999999@s.whatsapp.net",
+            "fromMe": False,
+            "id": "message_id",
+            "participant": "5511999999999@s.whatsapp.net"
+        },
+        "message": {
+            "conversation": "Última mensagem"
+        }
+    },
+    chat="5511999999999@s.whatsapp.net"
+)
+
+response = client.chat.unread_chat(instance_id, config, instance_token)
+```
+
+#### Get Chat Profile Picture
+```python
+from evolutionapi.models.chat import ProfilePicture
+
+config = ProfilePicture(
+    number="5511999999999"
+)
+
+response = client.chat.get_chat_profile_picture(instance_id, config, instance_token)
+```
+
+#### Download Media Message
+```python
+from evolutionapi.models.chat import MediaMessage
+
+config = MediaMessage(
+    message={
+        "key": {
+            "remoteJid": "5511999999999@s.whatsapp.net",
+            "fromMe": False,
+            "id": "message_id",
+            "participant": "5511999999999@s.whatsapp.net"
+        },
+        "message": {
+            "imageMessage": {
+                "jpegThumbnail": "base64_da_imagem"
+            }
+        }
+    },
+    convert_to_mp4=True  # opcional, para converter vídeos para MP4
+)
+
+response = client.chat.download_media_message(instance_id, config, instance_token)
+```
+
+#### Update Message
+```python
+from evolutionapi.models.chat import UpdateMessage
+
+config = UpdateMessage(
+    number="5511999999999",
+    key={
+        "remoteJid": "5511999999999@s.whatsapp.net",
+        "fromMe": False,
+        "id": "message_id",
+        "participant": "5511999999999@s.whatsapp.net"
+    },
+    text="Mensagem atualizada"
+)
+
+response = client.chat.update_message(instance_id, config, instance_token)
+```
+
+#### Set Presence
+```python
+from evolutionapi.models.chat import Presence
+
+config = Presence(
+    number="5511999999999",
+    delay=1000,  # delay em ms
+    presence="composing"  # "composing", "recording", "paused"
+)
+
+response = client.chat.set_presence(instance_id, config, instance_token)
+```
+
+### Calls
+
+#### Simulate Call
 ```python
 from evolutionapi.models.call import FakeCall
 
+# Chamada de voz
 config = FakeCall(
     number="5511999999999",
     isVideo=False,
-    callDuration=30
+    callDuration=30  # duração em segundos
+)
+
+# Chamada de vídeo
+config = FakeCall(
+    number="5511999999999",
+    isVideo=True,
+    callDuration=30  # duração em segundos
 )
 
 response = client.calls.fake_call(instance_id, config, instance_token)
@@ -278,14 +852,22 @@ response = client.calls.fake_call(instance_id, config, instance_token)
 
 ### Labels
 
-#### Gerenciar Labels
+#### Manage Labels
 ```python
 from evolutionapi.models.label import HandleLabel
 
+# Adicionar etiqueta
 config = HandleLabel(
     number="5511999999999",
     label_id="label_id",
-    action="add"  # ou "remove"
+    action="add"
+)
+
+# Remover etiqueta
+config = HandleLabel(
+    number="5511999999999",
+    label_id="label_id",
+    action="remove"
 )
 
 response = client.label.handle_label(instance_id, config, instance_token)
@@ -293,130 +875,130 @@ response = client.label.handle_label(instance_id, config, instance_token)
 
 ## WebSocket
 
-O cliente Evolution API suporta conexão via WebSocket para receber eventos em tempo real. Aqui está um guia de como usar:
+The Evolution API client supports WebSocket connection to receive real-time events. Here's a guide on how to use it:
 
-### Configuração Básica
+### Basic Configuration
 
 ```python
 from evolutionapi.services.websocket import WebSocketManager
 import logging
 
-# Configuração do logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# Configuração do WebSocket
+# WebSocket configuration
 websocket = WebSocketManager(
-    base_url="http://localhost:8081",  # URL da sua Evolution API
-    instance_id="teste",               # ID da sua instância
-    api_token="seu-token-aqui"         # Token de autenticação
+    base_url="http://localhost:8081",  # Your Evolution API URL
+    instance_id="test",                # Your instance ID
+    api_token="your-api-token"         # Your API token
 )
 ```
 
-### Registrando Handlers de Eventos
+### Registering Event Handlers
 
-Você pode registrar handlers para diferentes tipos de eventos:
+You can register handlers for different types of events:
 
 ```python
 def handle_message(data):
-    print(f"Nova mensagem recebida: {data}")
+    print(f"New message received: {data}")
 
 def handle_qrcode(data):
-    print(f"QR Code atualizado: {data}")
+    print(f"QR Code updated: {data}")
 
-# Registrando handlers
+# Registering handlers
 websocket.on("messages.upsert", handle_message)
 websocket.on("qrcode.updated", handle_qrcode)
 ```
 
-### Eventos Disponíveis
+### Available Events
 
-Os eventos disponíveis são:
+The available events are:
 
-#### Eventos de Instância
-- `application.startup`: Disparado quando a aplicação inicia
-- `instance.create`: Disparado quando uma nova instância é criada
-- `instance.delete`: Disparado quando uma instância é deletada
-- `remove.instance`: Disparado quando uma instância é removida
-- `logout.instance`: Disparado quando uma instância faz logout
+#### Instance Events
+- `application.startup`: Triggered when the application starts
+- `instance.create`: Triggered when a new instance is created
+- `instance.delete`: Triggered when an instance is deleted
+- `remove.instance`: Triggered when an instance is removed
+- `logout.instance`: Triggered when an instance logs out
 
-#### Eventos de Conexão e QR Code
-- `qrcode.updated`: Disparado quando o QR Code é atualizado
-- `connection.update`: Disparado quando o status da conexão muda
-- `status.instance`: Disparado quando o status da instância muda
-- `creds.update`: Disparado quando as credenciais são atualizadas
+#### Connection and QR Code Events
+- `qrcode.updated`: Triggered when the QR Code is updated
+- `connection.update`: Triggered when connection status changes
+- `status.instance`: Triggered when instance status changes
+- `creds.update`: Triggered when credentials are updated
 
-#### Eventos de Mensagens
-- `messages.set`: Disparado quando mensagens são definidas
-- `messages.upsert`: Disparado quando novas mensagens são recebidas
-- `messages.edited`: Disparado quando mensagens são editadas
-- `messages.update`: Disparado quando mensagens são atualizadas
-- `messages.delete`: Disparado quando mensagens são deletadas
-- `send.message`: Disparado quando uma mensagem é enviada
-- `messaging-history.set`: Disparado quando o histórico de mensagens é definido
+#### Message Events
+- `messages.set`: Triggered when messages are set
+- `messages.upsert`: Triggered when new messages are received
+- `messages.edited`: Triggered when messages are edited
+- `messages.update`: Triggered when messages are updated
+- `messages.delete`: Triggered when messages are deleted
+- `send.message`: Triggered when a message is sent
+- `messaging-history.set`: Triggered when messaging history is set
 
-#### Eventos de Contatos
-- `contacts.set`: Disparado quando contatos são definidos
-- `contacts.upsert`: Disparado quando novos contatos são adicionados
-- `contacts.update`: Disparado quando contatos são atualizados
+#### Contact Events
+- `contacts.set`: Triggered when contacts are set
+- `contacts.upsert`: Triggered when new contacts are added
+- `contacts.update`: Triggered when contacts are updated
 
-#### Eventos de Chats
-- `chats.set`: Disparado quando chats são definidos
-- `chats.update`: Disparado quando chats são atualizados
-- `chats.upsert`: Disparado quando novos chats são adicionados
-- `chats.delete`: Disparado quando chats são deletados
+#### Chat Events
+- `chats.set`: Triggered when chats are set
+- `chats.update`: Triggered when chats are updated
+- `chats.upsert`: Triggered when new chats are added
+- `chats.delete`: Triggered when chats are deleted
 
-#### Eventos de Grupos
-- `groups.upsert`: Disparado quando grupos são criados/atualizados
-- `groups.update`: Disparado quando grupos são atualizados
-- `group-participants.update`: Disparado quando participantes de um grupo são atualizados
+#### Group Events
+- `groups.upsert`: Triggered when groups are created/updated
+- `groups.update`: Triggered when groups are updated
+- `group-participants.update`: Triggered when group participants are updated
 
-#### Eventos de Presença
-- `presence.update`: Disparado quando o status de presença é atualizado
+#### Presence Events
+- `presence.update`: Triggered when presence status is updated
 
-#### Eventos de Chamadas
-- `call`: Disparado quando há uma chamada
+#### Call Events
+- `call`: Triggered when there's a call
 
-#### Eventos de Typebot
-- `typebot.start`: Disparado quando um typebot inicia
-- `typebot.change-status`: Disparado quando o status do typebot muda
+#### Typebot Events
+- `typebot.start`: Triggered when a typebot starts
+- `typebot.change-status`: Triggered when typebot status changes
 
-#### Eventos de Labels
-- `labels.edit`: Disparado quando labels são editados
-- `labels.association`: Disparado quando labels são associados/desassociados
+#### Label Events
+- `labels.edit`: Triggered when labels are edited
+- `labels.association`: Triggered when labels are associated/disassociated
 
-### Exemplo de Uso com Eventos Específicos
+### Example with Specific Events
 
 ```python
 def handle_messages(data):
-    logger.info(f"Nova mensagem: {data}")
+    logger.info(f"New message: {data}")
 
 def handle_contacts(data):
-    logger.info(f"Contatos atualizados: {data}")
+    logger.info(f"Contacts updated: {data}")
 
 def handle_groups(data):
-    logger.info(f"Grupos atualizados: {data}")
+    logger.info(f"Groups updated: {data}")
 
 def handle_presence(data):
-    logger.info(f"Status de presença: {data}")
+    logger.info(f"Presence status: {data}")
 
-# Registrando handlers para diferentes eventos
+# Registering handlers for different events
 websocket.on("messages.upsert", handle_messages)
 websocket.on("contacts.upsert", handle_contacts)
 websocket.on("groups.upsert", handle_groups)
 websocket.on("presence.update", handle_presence)
 ```
 
-### Exemplo Completo
+### Complete Example
 
 ```python
 from evolutionapi.services.websocket import WebSocketManager
 import logging
 import time
 
-# Configuração do logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -424,84 +1006,85 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def handle_message(data):
-    logger.info(f"Nova mensagem recebida: {data}")
+    logger.info(f"New message received: {data}")
 
 def handle_qrcode(data):
-    logger.info(f"QR Code atualizado: {data}")
+    logger.info(f"QR Code updated: {data}")
 
 def handle_connection(data):
-    logger.info(f"Status da conexão: {data}")
+    logger.info(f"Connection status: {data}")
 
 def main():
-    # Inicializa o WebSocket
+    # Initialize WebSocket
     websocket = WebSocketManager(
         base_url="http://localhost:8081",
-        instance_id="teste",
-        api_token="seu-token-aqui"
+        instance_id="test",
+        api_token="your-api-token"
     )
 
-    # Registra os handlers
+    # Register handlers
     websocket.on("messages.upsert", handle_message)
     websocket.on("qrcode.updated", handle_qrcode)
     websocket.on("connection.update", handle_connection)
 
     try:
-        # Conecta ao WebSocket
+        # Connect to WebSocket
         websocket.connect()
-        logger.info("Conectado ao WebSocket. Aguardando eventos...")
+        logger.info("Connected to WebSocket. Waiting for events...")
 
-        # Mantém o programa rodando
+        # Keep the program running
         while True:
             time.sleep(1)
 
     except KeyboardInterrupt:
-        logger.info("Encerrando conexão...")
+        logger.info("Closing connection...")
         websocket.disconnect()
     except Exception as e:
-        logger.error(f"Erro: {e}")
+        logger.error(f"Error: {e}")
         websocket.disconnect()
 
 if __name__ == "__main__":
     main()
+```
 
-### Recursos Adicionais
+### Additional Features
 
-#### Reconexão Automática
+#### Automatic Reconnection
 
-O WebSocket Manager possui reconexão automática com backoff exponencial:
+The WebSocket Manager has automatic reconnection with exponential backoff:
 
 ```python
 websocket = WebSocketManager(
     base_url="http://localhost:8081",
-    instance_id="teste",
-    api_token="seu-token-aqui",
-    max_retries=5,        # Número máximo de tentativas de reconexão
-    retry_delay=1.0       # Delay inicial entre tentativas em segundos
+    instance_id="test",
+    api_token="your-api-token",
+    max_retries=5,        # Maximum number of reconnection attempts
+    retry_delay=1.0       # Initial delay between attempts in seconds
 )
 ```
 
 #### Logging
 
-O WebSocket Manager utiliza o sistema de logging do Python. Você pode ajustar o nível de log conforme necessário:
+The WebSocket Manager uses Python's logging system. You can adjust the log level as needed:
 
 ```python
-# Para ver mais detalhes
+# For more details
 logging.getLogger("evolutionapi.services.websocket").setLevel(logging.DEBUG)
 ```
 
-### Tratamento de Erros
+### Error Handling
 
-O WebSocket Manager possui tratamento de erros robusto:
+The WebSocket Manager has robust error handling:
 
-- Reconexão automática em caso de desconexão
-- Logs detalhados de erros
-- Tratamento de eventos inválidos
-- Validação de dados recebidos
+- Automatic reconnection on disconnection
+- Detailed error logs
+- Invalid event handling
+- Data validation
 
-### Dicas de Uso
+### Usage Tips
 
-1. Sempre use try/except ao conectar ao WebSocket
-2. Implemente handlers para todos os eventos que você precisa monitorar
-3. Use logging para debug e monitoramento
-4. Considere implementar um mecanismo de heartbeat se necessário
-5. Mantenha o token de API seguro e não o exponha em logs
+1. Always use try/except when connecting to WebSocket
+2. Implement handlers for all events you need to monitor
+3. Use logging for debugging and monitoring
+4. Consider implementing a heartbeat mechanism if needed
+5. Keep your API token secure and don't expose it in logs
