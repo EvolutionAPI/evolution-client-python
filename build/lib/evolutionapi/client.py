@@ -9,6 +9,8 @@ from .services.chat import ChatService
 from .services.label import LabelService
 from .services.profile import ProfileService
 from .services.group import GroupService
+from .services.websocket import WebSocketService, WebSocketManager
+
 class EvolutionClient:
     """
     Cliente para interagir com a API Evolution.
@@ -29,6 +31,7 @@ class EvolutionClient:
         self.label = LabelService(self)
         self.profile = ProfileService(self)
         self.group = GroupService(self)
+        self.websocket = WebSocketService(self)
         
     def _get_headers(self, instance_token: str = None):
         return {
@@ -112,3 +115,24 @@ class EvolutionClient:
         url = self._get_full_url(endpoint)
         response = requests.delete(url, headers=self._get_headers(instance_token))
         return self._handle_response(response)
+
+    def create_websocket(self, instance_id: str, api_token: str, max_retries: int = 5, retry_delay: float = 1.0) -> WebSocketManager:
+        """
+        Create a WebSocket manager for the specified instance.
+        
+        Args:
+            instance_id (str): The instance ID
+            api_token (str): The API token
+            max_retries (int): Maximum number of reconnection attempts
+            retry_delay (float): Initial delay between attempts in seconds
+            
+        Returns:
+            WebSocketManager: The WebSocket manager instance
+        """
+        return WebSocketManager(
+            base_url=self.base_url,
+            instance_id=instance_id,
+            api_token=api_token,
+            max_retries=max_retries,
+            retry_delay=retry_delay
+        )
