@@ -1,7 +1,7 @@
 from evolutionapi.client import EvolutionClient
 from evolutionapi.models.instance import InstanceConfig
 from evolutionapi.models.message import TextMessage, MediaMessage, MediaType
-from evolutionapi.services.websocket import WebSocketManager
+from evolutionapi.models.websocket import WebSocketConfig
 import time
 import logging
 
@@ -22,11 +22,54 @@ client = EvolutionClient(
 instance_token = "82D55E57CBBC-48A5-98FB-E99655AE7148"
 instance_id = "teste"
 
-# Inicializando o WebSocket
-websocket_manager = WebSocketManager(
-    base_url='http://localhost:8081',
+# Configurando eventos do WebSocket
+websocket_config = WebSocketConfig(
+    enabled=True,
+    events=[
+        "APPLICATION_STARTUP",
+        "QRCODE_UPDATED",
+        "MESSAGES_SET",
+        "MESSAGES_UPSERT",
+        "MESSAGES_UPDATE",
+        "MESSAGES_DELETE",
+        "SEND_MESSAGE",
+        "CONTACTS_SET",
+        "CONTACTS_UPSERT",
+        "CONTACTS_UPDATE",
+        "PRESENCE_UPDATE",
+        "CHATS_SET",
+        "CHATS_UPSERT",
+        "CHATS_UPDATE",
+        "CHATS_DELETE",
+        "GROUPS_UPSERT",
+        "GROUP_UPDATE",
+        "GROUP_PARTICIPANTS_UPDATE",
+        "CONNECTION_UPDATE",
+        "LABELS_EDIT",
+        "LABELS_ASSOCIATION",
+        "CALL",
+        "TYPEBOT_START",
+        "TYPEBOT_CHANGE_STATUS"
+    ]
+)
+
+# Configurando WebSocket para a instância
+logger.info("Configurando WebSocket...")
+response = client.websocket.set_websocket(instance_id, websocket_config, instance_token)
+logger.info(f"Configuração WebSocket: {response}")
+
+# Obtendo configuração atual do WebSocket
+websocket_info = client.websocket.find_websocket(instance_id, instance_token)
+logger.info(f"WebSocket habilitado: {websocket_info.enabled}")
+logger.info(f"Eventos configurados: {websocket_info.events}")
+
+# Criando gerenciador WebSocket usando o cliente
+logger.info("Criando gerenciador WebSocket...")
+websocket_manager = client.create_websocket(
     instance_id=instance_id,
-    api_token=instance_token
+    api_token=instance_token,
+    max_retries=5,
+    retry_delay=1.0
 )
     
 def on_message(data):
@@ -53,10 +96,24 @@ def on_message(data):
     except Exception as e:
         logger.error(f"Erro ao processar mensagem: {e}", exc_info=True)
 
+def on_qrcode(data):
+    """Handler para evento de QR Code"""
+    logger.info("=== QR Code Atualizado ===")
+    logger.info(f"QR Code: {data}")
+    logger.info("=======================")
+
+def on_connection(data):
+    """Handler para evento de conexão"""
+    logger.info("=== Status de Conexão ===")
+    logger.info(f"Status: {data}")
+    logger.info("=======================")
+
 logger.info("Registrando handlers de eventos...")
 
 # Registrando handlers de eventos
 websocket_manager.on('messages.upsert', on_message)
+websocket_manager.on('qrcode.updated', on_qrcode)
+websocket_manager.on('connection.update', on_connection)
 
 try:
     logger.info("Iniciando conexão WebSocket...")
@@ -72,10 +129,9 @@ except KeyboardInterrupt:
 finally:
     websocket_manager.disconnect()
 
+# Exemplos de outras operações (comentados)
 # response = client.group.fetch_all_groups(instance_id, instance_token, False)
-
 # print(response)
-
 
 # text_message = TextMessage(
 #     number="557499879409",
@@ -84,7 +140,6 @@ finally:
 # )
 
 # response = client.messages.send_text(instance_id, text_message, instance_token)
-
 # print("Mensagem de texto enviada")
 # print(response)
 
@@ -97,73 +152,5 @@ finally:
 # )
 
 # response = client.messages.send_media(instance_id, media_message, instance_token, "arquivo.pdf")
-
 # print("Mensagem de mídia enviada")
 # print(response)
-
-# print("Buscando instâncias")
-# instances = client.instances.fetch_instances()
-
-# print("Instâncias encontradas")
-# print(instances)
-
-# print("Criando instância")
-# config = InstanceConfig(
-#     instanceName="instance-python3",
-#     integration="WHATSAPP-BAILEYS",
-#     qrcode=True,
-# )
-
-# new_instance = client.instances.create_instance(config)
-
-# print("Instância criada")
-# print(new_instance)
-
-# instance_token = new_instance['hash']
-# instance_id = new_instance['instance']['instanceName']
-
-# print("Recuperando estado de conexão")
-# connection_state = client.instance_operations.get_connection_state(instance_id, instance_token)
-
-# print("Estado de conexão")
-# print(connection_state)
-
-# print("Conectando instância")
-# connection_state = client.instance_operations.connect(instance_id, instance_token)
-
-# print("Estado de conexão")
-# print(connection_state)
-
-# print("Reiniciando instância")
-# restart_instance = client.instance_operations.restart(instance_id, instance_token)
-
-# print("Instância reiniciada")
-# print(restart_instance)
-
-# print("Desconectando instância")
-# logout_instance = client.instance_operations.logout(instance_id, instance_token)
-
-# print("Instância desconectada")
-# print(logout_instance)
-
-# print("Deletando instância")
-# delete_instance = client.instance_operations.delete(instance_id, instance_token)
-
-# print("Instância deletada")
-# print(delete_instance)
-
-# group_id = "120363026465248932@g.us"
-
-# # Buscando as 3 últimas mensagens do grupo
-# mensagens = client.chat.get_messages(
-#     instance_id=instance_id,
-#     remote_jid=group_id,
-#     instance_token=instance_token,
-#     timestamp_start="2025-01-16T00:00:00Z",
-#     timestamp_end="2025-01-16T23:59:59Z",
-#     page=1,
-#     offset=10
-# )
-
-# print("Mensagens encontradas:")
-# print(mensagens)

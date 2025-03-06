@@ -877,8 +877,74 @@ response = client.label.handle_label(instance_id, config, instance_token)
 
 The Evolution API client supports WebSocket connection to receive real-time events. Here's a guide on how to use it:
 
+### Prerequisites
+
+Before using WebSocket, you need to:
+
+1. Enable WebSocket in your Evolution API by setting the environment variable:
+```bash
+WEBSOCKET_ENABLED=true
+```
+
+2. Configure WebSocket events for your instance using the WebSocket service:
+```python
+from evolutionapi.models.websocket import WebSocketConfig
+
+# Configure WebSocket events
+config = WebSocketConfig(
+    enabled=True,
+    events=[
+        "APPLICATION_STARTUP",
+        "QRCODE_UPDATED",
+        "MESSAGES_SET",
+        "MESSAGES_UPSERT",
+        "MESSAGES_UPDATE",
+        "MESSAGES_DELETE",
+        "SEND_MESSAGE",
+        "CONTACTS_SET",
+        "CONTACTS_UPSERT",
+        "CONTACTS_UPDATE",
+        "PRESENCE_UPDATE",
+        "CHATS_SET",
+        "CHATS_UPSERT",
+        "CHATS_UPDATE",
+        "CHATS_DELETE",
+        "GROUPS_UPSERT",
+        "GROUP_UPDATE",
+        "GROUP_PARTICIPANTS_UPDATE",
+        "CONNECTION_UPDATE",
+        "LABELS_EDIT",
+        "LABELS_ASSOCIATION",
+        "CALL",
+        "TYPEBOT_START",
+        "TYPEBOT_CHANGE_STATUS"
+    ]
+)
+
+# Set WebSocket configuration
+response = client.websocket.set_websocket(instance_id, config, instance_token)
+
+# Get current WebSocket configuration
+websocket_info = client.websocket.find_websocket(instance_id, instance_token)
+print(f"WebSocket enabled: {websocket_info.enabled}")
+print(f"Configured events: {websocket_info.events}")
+```
+
 ### Basic Configuration
 
+There are two ways to create a WebSocket manager:
+
+1. Using the client's helper method:
+```python
+# Create WebSocket manager using the client
+websocket = client.create_websocket(
+    instance_id="test",
+    max_retries=5,        # Maximum number of reconnection attempts
+    retry_delay=1.0       # Initial delay between attempts in seconds
+)
+```
+
+2. Creating the manager directly:
 ```python
 from evolutionapi.services.websocket import WebSocketManager
 import logging
@@ -889,7 +955,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# WebSocket configuration
+# Create WebSocket manager directly
 websocket = WebSocketManager(
     base_url="http://localhost:8081",  # Your Evolution API URL
     instance_id="test",                # Your instance ID
